@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C++" filename="main.cpp"><comment type="block">/*
+ *  main.cpp
+ *  Profiler
+ *
+ *  Created by Jonathan Maletic on 11/8/11.
+ *  Copyright 2013 Kent State University. All rights reserved.
+ *
+ *  Requires main.cpp first, followed by other files.
+ *
+ *  Modified by:
+ *
+ */</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;iostream&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;fstream&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;vector&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;algorithm&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"ASTree.hpp"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"profile.hpp"</cpp:file></cpp:include>
+
+
+<comment type="line">//</comment>
+<comment type="line">// Reads a srcML file into an internal data structure.</comment>
+<comment type="line">// Then prints out the data structure.</comment>
+
+<function><type><name>int</name></type> <name>main</name><parameter_list>(<param><decl><type><name>int</name></type> <name>argc</name></decl></param>, <param><decl><type><name>char</name> *</type><name><name>argv</name><index>[]</index></name></decl></param>)</parameter_list> <block>{
+    <if>if <condition>(<expr><name>argc</name> &lt; 2</expr>)</condition><then> <block>{
+        <expr_stmt><expr><name><name>std</name>::<name>cerr</name></name> &lt;&lt; "Error: One or more input files are required." &lt;&lt; <name><name>std</name>::<name>endl</name></name></expr>;</expr_stmt>
+        <expr_stmt><expr><name><name>std</name>::<name>cerr</name></name> &lt;&lt; "       The main must be the first argument followed by any other .cpp files.  For example:" &lt;&lt; <name><name>std</name>::<name>endl</name></name></expr>;</expr_stmt>
+        <expr_stmt><expr><name><name>std</name>::<name>cerr</name></name> &lt;&lt; "profile main.cpp.xml file1.cpp.xml file2.cpp.xml" &lt;&lt; <name><name>std</name>::<name>endl</name></name> &lt;&lt; <name><name>std</name>::<name>endl</name></name></expr>;</expr_stmt>
+        <return>return<expr>(1)</expr>;</return>
+    }</block></then></if>
+    
+    <decl_stmt><decl><type><name>srcML</name></type>                     <name>code</name></decl>;</decl_stmt>              <comment type="line">//The source code to be profiled.</comment>
+    <decl_stmt><decl><type><name><name>std</name>::<name><name>vector</name><argument_list>&lt;<argument><name><name>std</name>::<name>string</name></name></argument>&gt;</argument_list></name></name></type>  <name>files</name></decl>;</decl_stmt>             <comment type="line">//The list of file names (without .xml)</comment>
+    <decl_stmt><decl><type><name><name>std</name>::<name><name>vector</name><argument_list>&lt;<argument><name><name>std</name>::<name>string</name></name></argument>&gt;</argument_list></name></name></type>  <name>profileNames</name></decl>;</decl_stmt>      <comment type="line">//The list of profile names to be used.</comment>
+    
+    <for>for (<init><decl><type><name>int</name></type> <name>i</name> =<init> <expr>1</expr></init></decl>;</init> <condition><expr><name>i</name> &lt; <name>argc</name></expr>;</condition> <incr><expr>++<name>i</name></expr></incr>) <block>{
+        <decl_stmt><decl><type><name><name>std</name>::<name>string</name></name></type> <name>filename</name> =<init> <expr><name><name>argv</name><index>[<expr><name>i</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+        <expr_stmt><expr><name>files</name>.<call><name>push_back</name><argument_list>(<argument><expr><name>filename</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+        <expr_stmt><expr><name>filename</name> = <name>filename</name>.<call><name>substr</name><argument_list>(<argument><expr>0</expr></argument>, <argument><expr><name>filename</name>.<call><name>find</name><argument_list>(<argument><expr>".xml"</expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>      <comment type="line">//Remove .xml</comment>
+        <expr_stmt><expr><call><name><name>std</name>::<name>replace</name></name><argument_list>(<argument><expr><name>filename</name>.<call><name>begin</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><name>filename</name>.<call><name>end</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr>'.'</expr></argument>, <argument><expr>'_'</expr></argument>)</argument_list></call></expr>;</expr_stmt>  <comment type="line">// Change . to _</comment>
+        <expr_stmt><expr><name>profileNames</name>.<call><name>push_back</name><argument_list>(<argument><expr><name>filename</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></for>
+    
+    <decl_stmt><decl><type><name><name>std</name>::<name>ifstream</name></name></type> <name>inFile</name><argument_list>(<argument><expr><name><name>files</name><index>[<expr>0</expr>]</index></name>.<call><name>c_str</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></decl>;</decl_stmt>    <comment type="line">//Read in the main.</comment>
+    <expr_stmt><expr><name>inFile</name> &gt;&gt; <name>code</name></expr>;</expr_stmt>                              
+    <expr_stmt><expr><name>inFile</name>.<call><name>close</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    
+    <expr_stmt><expr><name>code</name>.<call><name>mainHeader</name><argument_list>(<argument><expr><name>profileNames</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>             <comment type="line">//Add in main header info</comment>
+    <expr_stmt><expr><name>code</name>.<call><name>mainReport</name><argument_list>(<argument><expr><name>profileNames</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>             <comment type="line">//Add in the report</comment>
+    <expr_stmt><expr><name>code</name>.<call><name>funcCount</name><argument_list>()</argument_list></call></expr>;</expr_stmt>                          <comment type="line">//Count funciton invocations</comment>
+    <expr_stmt><expr><name>code</name>.<call><name>lineCount</name><argument_list>(<argument><expr><name><name>profileNames</name><index>[<expr>0</expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>           <comment type="line">//Count line invocations</comment>
+    
+    <decl_stmt><decl><type><name><name>std</name>::<name>string</name></name></type> <name>outFileName</name> =<init> <expr>"p-" + <name><name>files</name><index>[<expr>0</expr>]</index></name></expr></init></decl>;</decl_stmt>
+    <expr_stmt><expr><name>outFileName</name> = <name>outFileName</name>.<call><name>substr</name><argument_list>(<argument><expr>0</expr></argument>, <argument><expr><name>outFileName</name>.<call><name>find</name><argument_list>(<argument><expr>".xml"</expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>  <comment type="line">//Remove .xml</comment>
+    <decl_stmt><decl><type><name><name>std</name>::<name>ofstream</name></name></type> <name>outFile</name><argument_list>(<argument><expr><name>outFileName</name>.<call><name>c_str</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></decl>;</decl_stmt>
+    <expr_stmt><expr><name>outFile</name> &lt;&lt; <name>code</name> &lt;&lt; <name><name>std</name>::<name>endl</name></name></expr>;</expr_stmt>
+    <expr_stmt><expr><name>outFile</name>.<call><name>close</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    
+    <for>for (<init><decl><type><name>unsigned</name></type> <name>i</name> =<init> <expr>1</expr></init></decl>;</init> <condition><expr><name>i</name> &lt; <name>files</name>.<call><name>size</name><argument_list>()</argument_list></call></expr>;</condition> <incr><expr>++<name>i</name></expr></incr>) <block>{  <comment type="line">//Read in the rest of the files.</comment>
+        <expr_stmt><expr><name>inFile</name>.<call><name>open</name><argument_list>(<argument><expr><name><name>files</name><index>[<expr><name>i</name></expr>]</index></name>.<call><name>c_str</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+        <expr_stmt><expr><name>inFile</name> &gt;&gt; <name>code</name></expr>;</expr_stmt>
+        <expr_stmt><expr><name>inFile</name>.<call><name>close</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+        
+        <expr_stmt><expr><name>code</name>.<call><name>fileHeader</name><argument_list>(<argument><expr><name>profileNames</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>             <comment type="line">//Add in file header info</comment>
+        <expr_stmt><expr><name>code</name>.<call><name>funcCount</name><argument_list>()</argument_list></call></expr>;</expr_stmt>                          <comment type="line">//Count funciton invocations</comment>
+        <expr_stmt><expr><name>code</name>.<call><name>lineCount</name><argument_list>(<argument><expr><name><name>profileNames</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>           <comment type="line">//Count line invocations</comment>
+        
+        <expr_stmt><expr><name>outFileName</name> = "p-" + <name><name>files</name><index>[<expr><name>i</name></expr>]</index></name></expr>;</expr_stmt>
+        <expr_stmt><expr><name>outFileName</name> = <name>outFileName</name>.<call><name>substr</name><argument_list>(<argument><expr>0</expr></argument>, <argument><expr><name>outFileName</name>.<call><name>find</name><argument_list>(<argument><expr>".xml"</expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>  <comment type="line">//Remove .xml</comment>
+        <expr_stmt><expr><name>outFile</name>.<call><name>open</name><argument_list>(<argument><expr><name>outFileName</name>.<call><name>c_str</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+        <expr_stmt><expr><name>outFile</name> &lt;&lt; <name>code</name> &lt;&lt; <name><name>std</name>::<name>endl</name></name></expr>;</expr_stmt>
+        <expr_stmt><expr><name>outFile</name>.<call><name>close</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    }</block></for>
+    
+	<return>return <expr>0</expr>;</return>
+}</block></function>
+
+
+</unit>
